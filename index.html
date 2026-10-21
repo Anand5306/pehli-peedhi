@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -22,10 +22,9 @@
       <strong>Demo Prototype</strong> &bull; Frontend interface &amp; navigation preview (No backend connected)
     </span>
     <div class="demo-role-quickswitch" id="demoRoleSwitchWrap">
-      <span style="color: #94a3b8; font-size: 0.72rem; margin-right: 4px;">Active View:</span>
-      <button type="button" id="roleBtnGuest" onclick="setRole('guest')">Guest</button>
-      <button type="button" id="roleBtnStudent" class="active" onclick="setRole('student')">Student View</button>
-      <button type="button" id="roleBtnMentor" onclick="setRole('mentor')">Graduate Mentor View</button>
+      <span style="color: #94a3b8; font-size: 0.72rem; margin-right: 4px;">View:</span>
+      <button type="button" id="roleBtnStudent" class="active" onclick="setRole('student')">Student</button>
+      <button type="button" id="roleBtnMentor" onclick="setRole('mentor')">Mentor</button>
     </div>
   </aside>
 
@@ -72,6 +71,9 @@
         </div>
         <button type="button" class="btn btn-sm btn-secondary" id="authBtn" onclick="toggleAuthNav()">
           Switch / Log In
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="logoutBtn" onclick="logoutUser()" style="display: none;">
+          Log Out
         </button>
       </div>
     </div>
@@ -163,7 +165,7 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

@@ -6,6 +6,76 @@
 
 // Global Application State (Persisted in localStorage for demo interactivity)
 const STORAGE_KEY = "pehlipedhi_state_v2";
+const USERS_KEY = "pehlipedhi_users_v1";
+const CURRENT_USER_KEY = "pehlipedhi_current_user_v1";
+
+function getUsers() {
+  try {
+    return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+  } catch (e) {
+    console.error("Failed to parse users, resetting:", e);
+    return [];
+  }
+}
+
+function saveUsers(users) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function signupUser(name, email, password) {
+  const users = getUsers();
+  const emailKey = email.trim().toLowerCase();
+
+  if (!name.trim() || !emailKey || !password.trim()) {
+    return { ok: false, message: "Please complete all fields." };
+  }
+
+  const exists = users.some(user => user.email.toLowerCase() === emailKey);
+  if (exists) {
+    return { ok: false, message: "User already exists. Please log in instead." };
+  }
+
+  users.push({
+    name: name.trim(),
+    email: emailKey,
+    password: password
+  });
+
+  saveUsers(users);
+  return { ok: true, user: { name: name.trim(), email: emailKey } };
+}
+
+function loginUser(email, password) {
+  const users = getUsers();
+  const emailKey = email.trim().toLowerCase();
+
+  const user = users.find(user => user.email.toLowerCase() === emailKey && user.password === password);
+  if (!user) {
+    return { ok: false, message: "Invalid email or password." };
+  }
+
+  const currentUser = { name: user.name, email: user.email };
+  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
+  return { ok: true, user: currentUser };
+}
+
+function getCurrentUser() {
+  try {
+    return JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || "null");
+  } catch (e) {
+    console.error("Failed to parse current user:", e);
+    return null;
+  }
+}
+
+function logoutUser() {
+  localStorage.removeItem(CURRENT_USER_KEY);
+  AppState.currentUser = null;
+  AppState.currentRole = "guest";
+  saveState();
+  updateHeaderUI();
+  navigateTo("landing");
+}
 
 function getInitialState() {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -20,6 +90,7 @@ function getInitialState() {
   return {
     currentRole: "student", // 'student' | 'mentor' | 'guest'
     authTab: "login", // 'login' | 'signup'
+    currentUser: getCurrentUser(),
     studentProfile: { ...INITIAL_STUDENT_PROFILE },
     mentorProfile: { ...INITIAL_MENTOR_PROFILE },
     mentors: [...SAMPLE_MENTORS],
@@ -89,21 +160,35 @@ function updateHeaderUI() {
   const userPill = document.getElementById("userPill");
   const userPillLabel = document.getElementById("userPillLabel");
   const authBtn = document.getElementById("authBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
   const mainNav = document.getElementById("mainNav");
 
   if (btnGuest) btnGuest.classList.toggle("active", AppState.currentRole === "guest");
   if (btnStudent) btnStudent.classList.toggle("active", AppState.currentRole === "student");
   if (btnMentor) btnMentor.classList.toggle("active", AppState.currentRole === "mentor");
 
+  // Keep the tab styling simple and focused on Student/Mentor modes.
+  if (btnStudent) btnStudent.textContent = "Student";
+  if (btnMentor) btnMentor.textContent = "Mentor";
+
+  const signedInName = AppState.currentUser?.name || AppState.studentProfile.fullName || AppState.mentorProfile.fullName;
+
+  if (logoutBtn) {
+    logoutBtn.style.display = AppState.currentUser ? "inline-flex" : "none";
+  }
+
   if (AppState.currentRole === "guest") {
     if (userPillLabel) userPillLabel.textContent = "Guest Visitor";
     if (authBtn) authBtn.textContent = "Log In / Sign Up";
+    if (authBtn) authBtn.onclick = function () { navigateTo("login"); };
   } else if (AppState.currentRole === "student") {
-    if (userPillLabel) userPillLabel.textContent = `Student: ${AppState.studentProfile.fullName}`;
+    if (userPillLabel) userPillLabel.textContent = `Student: ${AppState.currentUser?.name || AppState.studentProfile.fullName}`;
     if (authBtn) authBtn.textContent = "Switch to Mentor View";
+    if (authBtn) authBtn.onclick = toggleAuthNav;
   } else if (AppState.currentRole === "mentor") {
-    if (userPillLabel) userPillLabel.textContent = `Graduate Mentor: ${AppState.mentorProfile.fullName}`;
+    if (userPillLabel) userPillLabel.textContent = `Graduate Mentor: ${AppState.currentUser?.name || AppState.mentorProfile.fullName}`;
     if (authBtn) authBtn.textContent = "Switch to Student View";
+    if (authBtn) authBtn.onclick = toggleAuthNav;
   }
 
   // DYNAMIC ROLE-BASED NAVIGATION
@@ -130,6 +215,7 @@ function updateHeaderUI() {
       mainNav.innerHTML = `
         <a href="#landing" class="nav-link ${activeHash === 'landing' ? 'active' : ''}">Home</a>
         <a href="#find-mentors" class="nav-link ${activeHash === 'find-mentors' ? 'active' : ''}">Find Mentors</a>
+        <a href="#student-resources" class="nav-link ${activeHash === 'student-resources' ? 'active' : ''}">Exams &amp; Scholarships</a>
         <a href="#student-dashboard" class="nav-link ${activeHash === 'student-dashboard' || activeHash === 'dashboard' ? 'active' : ''}">
           My Dashboard &amp; Requests
         </a>
@@ -222,6 +308,9 @@ function renderCurrentView() {
     case "mentor-detail":
       main.innerHTML = renderMentorDetailPage(AppState.selectedMentorId);
       break;
+    case "student-resources":
+      main.innerHTML = renderStudentResourcesPage();
+      break;
     case "student-dashboard":
       main.innerHTML = renderStudentDashboard();
       break;
@@ -292,6 +381,9 @@ function renderLandingPage() {
                   ${isStudent ? 'Find Graduate Mentors &rarr;' : 'Get Started &mdash; It\'s Free'}
                 </a>
                 ${isStudent ? `
+                  <a href="#student-resources" class="btn btn-secondary btn-lg">
+                    Exam Dates &amp; Scholarships
+                  </a>
                   <a href="#student-dashboard" class="btn btn-secondary btn-lg">
                     My Student Dashboard
                   </a>
@@ -457,21 +549,15 @@ function renderAuthPage(mode) {
           <!-- Role Selector: Student vs Graduate Mentor -->
           <div class="form-group">
             <span class="role-select-label">Choose your role:</span>
-            <div class="role-cards-grid">
-              <label class="role-card-radio">
+            <div class="simple-role-tabs">
+              <label class="role-tab active">
                 <input type="radio" name="authRole" value="student" checked>
-                <div class="role-card-inner">
-                  <div class="role-card-title">Student</div>
-                  <div class="role-card-desc">Seeking guidance for college or career</div>
-                </div>
+                <span>Student</span>
               </label>
 
-              <label class="role-card-radio">
+              <label class="role-tab">
                 <input type="radio" name="authRole" value="mentor">
-                <div class="role-card-inner">
-                  <div class="role-card-title">Graduate Mentor</div>
-                  <div class="role-card-desc">First-gen graduate giving back</div>
-                </div>
+                <span>Mentor</span>
               </label>
             </div>
           </div>
@@ -515,22 +601,51 @@ function initAuthFormHandlers(mode) {
   const form = document.getElementById("authForm");
   if (!form) return;
 
+  const roleInputs = document.querySelectorAll('input[name="authRole"]');
+  roleInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      document.querySelectorAll(".role-tab").forEach((tab) => {
+        const tabInput = tab.querySelector("input");
+        tab.classList.toggle("active", tabInput && tabInput.checked);
+      });
+    });
+  });
+
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const selectedRole = document.querySelector('input[name="authRole"]:checked')?.value || "student";
     const emailInput = document.getElementById("authEmail")?.value || "";
-    const nameInput = document.getElementById("authFullName")?.value;
+    const nameInput = document.getElementById("authFullName")?.value || "";
+    const passwordInput = document.getElementById("authPassword")?.value || "";
+
+    if (mode === "signup") {
+      const result = signupUser(nameInput, emailInput, passwordInput);
+      if (!result.ok) {
+        alert(result.message);
+        return;
+      }
+
+      AppState.currentUser = result.user;
+    } else {
+      const result = loginUser(emailInput, passwordInput);
+      if (!result.ok) {
+        alert(result.message);
+        return;
+      }
+
+      AppState.currentUser = result.user;
+    }
 
     AppState.currentRole = selectedRole;
     if (selectedRole === "student") {
-      if (nameInput) AppState.studentProfile.fullName = nameInput;
-      if (emailInput) AppState.studentProfile.email = emailInput;
+      if (AppState.currentUser?.name) AppState.studentProfile.fullName = AppState.currentUser.name;
+      if (AppState.currentUser?.email) AppState.studentProfile.email = AppState.currentUser.email;
       saveState();
       updateHeaderUI();
       navigateTo(mode === "signup" ? "student-profile" : "student-dashboard");
     } else {
-      if (nameInput) AppState.mentorProfile.fullName = nameInput;
-      if (emailInput) AppState.mentorProfile.email = emailInput;
+      if (AppState.currentUser?.name) AppState.mentorProfile.fullName = AppState.currentUser.name;
+      if (AppState.currentUser?.email) AppState.mentorProfile.email = AppState.currentUser.email;
       saveState();
       updateHeaderUI();
       navigateTo(mode === "signup" ? "mentor-profile" : "mentor-dashboard");
@@ -1234,6 +1349,143 @@ function renderMentorDetailPage(mentorId) {
 }
 
 // --------------------------------------------------------------------------
+// 7. STUDENT RESOURCES: EXAM DATES & SCHOLARSHIPS
+// --------------------------------------------------------------------------
+function renderStudentResourcesPage() {
+  const examDates = [
+    {
+      name: "JEE Main",
+      date: "January 2027 / April 2027",
+      type: "Engineering",
+      note: "One of the key engineering entrance tests in India for B.E./B.Tech admissions.",
+      link: "https://jeemain.nta.nic.in/"
+    },
+    {
+      name: "NEET UG",
+      date: "May 2027",
+      type: "Medical",
+      note: "National test for MBBS, BDS, and other undergraduate medical programs.",
+      link: "https://neet.nta.nic.in/"
+    },
+    {
+      name: "CUET UG",
+      date: "May 2027",
+      type: "University Admissions",
+      note: "Centralised exam used by many central and participating universities.",
+      link: "https://cuet.nta.nic.in/"
+    },
+    {
+      name: "CLAT",
+      date: "December 2026",
+      type: "Law",
+      note: "Entrance test for undergraduate law programs in national law universities.",
+      link: "https://consortiumofnlus.ac.in/clat-2027/"
+    },
+    {
+      name: "CAT",
+      date: "November 2026",
+      type: "Management",
+      note: "Common admission test for MBA and management programs in India.",
+      link: "https://iimcat.ac.in/"
+    }
+  ];
+
+  const scholarships = [
+    {
+      name: "National Scholarship Portal (NSP)",
+      note: "Official portal for central and state scholarships for eligible students.",
+      link: "https://scholarships.gov.in/"
+    },
+    {
+      name: "PM Vidyalaxmi Scheme",
+      note: "Education loan support and interest subsidies for meritorious students.",
+      link: "https://pmvidyalaxmi.co.in/"
+    },
+    {
+      name: "INSPIRE Scholarship",
+      note: "Government scholarship for science students with strong academic performance.",
+      link: "https://online-inspire.gov.in/"
+    },
+    {
+      name: "Post Matric Scholarship (PMS)",
+      note: "Scholarships for students from eligible communities pursuing post-matric education.",
+      link: "https://scholarships.gov.in/"
+    }
+  ];
+
+  return `
+    <div class="page-view resource-page-container">
+      <div class="dashboard-head-card resource-head-card">
+        <div class="dashboard-welcome-info">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+            <span class="badge-role">Student Resources</span>
+            <span class="badge-demo">Exam Dates &amp; Scholarships</span>
+          </div>
+          <h1>Entrance Exams &amp; Funding Support</h1>
+          <p>Plan your preparation with key dates and trusted official scholarship portals.</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <a href="#find-mentors" class="btn btn-primary" onclick="navigateTo('find-mentors')">
+            Talk to a Mentor
+          </a>
+          <a href="#student-dashboard" class="btn btn-secondary" onclick="navigateTo('student-dashboard')">
+            Back to Dashboard
+          </a>
+        </div>
+      </div>
+
+      <div class="resource-grid">
+        <section class="resource-panel">
+          <div class="resource-panel-header">
+            <h2>Upcoming Entrance Exams</h2>
+            <span class="resource-pill">Official Links</span>
+          </div>
+
+          <div class="resource-list">
+            ${examDates.map(exam => `
+              <article class="resource-card">
+                <div class="resource-topline">
+                  <span class="resource-type">${exam.type}</span>
+                  <span class="resource-date">${exam.date}</span>
+                </div>
+                <h3>${exam.name}</h3>
+                <p>${exam.note}</p>
+                <a href="${exam.link}" target="_blank" rel="noopener noreferrer" class="resource-link">
+                  View official exam page →
+                </a>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+
+        <section class="resource-panel">
+          <div class="resource-panel-header">
+            <h2>Scholarship Details</h2>
+            <span class="resource-pill success">Helpful Funding</span>
+          </div>
+
+          <div class="resource-list">
+            ${scholarships.map(item => `
+              <article class="resource-card">
+                <div class="resource-topline">
+                  <span class="resource-type">Scholarship</span>
+                  <span class="resource-date">Govt. portal</span>
+                </div>
+                <h3>${item.name}</h3>
+                <p>${item.note}</p>
+                <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="resource-link">
+                  Open scholarship details →
+                </a>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      </div>
+    </div>
+  `;
+}
+
+// --------------------------------------------------------------------------
 // 7. STUDENT DASHBOARD (With Mentor Contact Unlocked upon Accept)
 // --------------------------------------------------------------------------
 function renderStudentDashboard() {
@@ -1253,9 +1505,12 @@ function renderStudentDashboard() {
           <p>Track your mentorship requests and find mentors who understand your background.</p>
         </div>
 
-        <div style="display: flex; gap: 0.75rem;">
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
           <a href="#find-mentors" class="btn btn-primary" onclick="navigateTo('find-mentors')">
             Find New Mentors
+          </a>
+          <a href="#student-resources" class="btn btn-secondary" onclick="navigateTo('student-resources')">
+            Exam Dates &amp; Scholarships
           </a>
           <a href="#student-profile" class="btn btn-secondary" onclick="navigateTo('student-profile')">
             Edit Profile
@@ -1794,6 +2049,12 @@ window.addEventListener("click", (e) => {
 window.addEventListener("hashchange", renderCurrentView);
 
 window.addEventListener("DOMContentLoaded", () => {
+  const savedUser = getCurrentUser();
+  if (savedUser) {
+    AppState.currentUser = savedUser;
+    AppState.currentRole = "student";
+  }
+
   setupMobileNav();
   renderCurrentView();
 });
