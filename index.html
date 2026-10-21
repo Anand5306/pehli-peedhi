@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PehliPeedhi - Mentorship for First-Generation Learners</title>
+  <meta name="description" content="PehliPeedhi connects first-generation students in India with verified graduate mentors who walked the same path. Free, accessible guidance on degrees, admissions, and careers.">
+  
+  <!-- Modern Clean Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Top Prototype Disclaimer & Role Quick-Toggle -->
+  <aside class="demo-top-banner" aria-label="Demo Prototype Banner">
+    <span>
+      <strong>Demo Prototype</strong> &bull; Frontend interface &amp; navigation preview (No backend connected)
+    </span>
+    <div class="demo-role-quickswitch" id="demoRoleSwitchWrap">
+      <span style="color: #94a3b8; font-size: 0.72rem; margin-right: 4px;">Active View:</span>
+      <button type="button" id="roleBtnGuest" onclick="setRole('guest')">Guest</button>
+      <button type="button" id="roleBtnStudent" class="active" onclick="setRole('student')">Student View</button>
+      <button type="button" id="roleBtnMentor" onclick="setRole('mentor')">Graduate Mentor View</button>
+    </div>
+  </aside>
+
+  <!-- Site Header & Minimal Navigation -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <!-- Brand Logo -->
+      <a href="#landing" class="brand-link" id="brandLogoLink">
+        <div class="brand-icon" aria-hidden="true">
+          <!-- Graduation Cap with Rising Sun rays -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <span class="brand-name">Pehli<span>Peedhi</span></span>
+          <span class="brand-sub">पहली पीढ़ी &bull; Mentorship Network</span>
+        </div>
+      </a>
+
+      <!-- Mobile Nav Hamburger -->
+      <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Primary Navigation Links -->
+      <nav class="site-nav" id="mainNav">
+        <a href="#landing" class="nav-link" id="navLanding">Home</a>
+        <a href="#find-mentors" class="nav-link" id="navFindMentors">Find Mentors</a>
+        <a href="#dashboard" class="nav-link" id="navDashboard">Dashboard</a>
+        <a href="#profile" class="nav-link" id="navProfile">My Profile</a>
+      </nav>
+
+      <!-- Header Actions & Current Role Badge -->
+      <div class="header-actions">
+        <div class="user-status-pill" id="userPill">
+          <span class="user-status-dot"></span>
+          <span id="userPillLabel">Student: Aman Kumar</span>
+        </div>
+        <button type="button" class="btn btn-sm btn-secondary" id="authBtn" onclick="toggleAuthNav()">
+          Switch / Log In
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Dynamic View Container -->
+  <main id="app-main" role="main">
+    <!-- View content rendered dynamically by js/app.js -->
+  </main>
+
+  <!-- Reusable Mentorship Request Modal Dialog -->
+  <div class="modal-overlay" id="requestModal" style="display: none;" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalMentorName">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <span class="badge-demo" style="margin-bottom: 4px;">Demo Request Action</span>
+          <h3 id="modalTitle">Request Mentorship</h3>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeRequestModal()" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+          Connect directly with <strong id="modalMentorName">Mentor</strong>. You can ask for advice on degree choices, college life, entrance exams, or overcoming first-generation challenges.
+        </p>
+
+        <form id="mentorshipRequestForm" onsubmit="handleRequestSubmit(event)">
+          <div class="form-group">
+            <label class="form-label" for="reqTopic">
+              What specific guidance do you need? <span class="required">*</span>
+            </label>
+            <textarea class="form-textarea" id="reqTopic" rows="3" required placeholder="e.g. Guidance on choosing between computer science vs electrical engineering, or how to apply for state post-matric scholarships."></textarea>
+            <span class="form-helper">Be concise and specific so the mentor can give you direct advice.</span>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="reqStudentLanguage">
+                Preferred Language <span class="required">*</span>
+              </label>
+              <select class="form-select" id="reqStudentLanguage" required>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reqPreferredContact">
+                Guidance Mode
+              </label>
+              <select class="form-select" id="reqPreferredContact">
+                <option value="Written Feedback">Written Guidance / Q&amp;A</option>
+                <option value="15-min Weekend Call">15-minute Weekend Call</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-disclaimer">
+            &bull; Sample request simulation: Submitting this adds a request to your <strong>Student Dashboard</strong> and the <strong>Mentor Dashboard</strong> in this demo session.
+          </div>
+
+          <div class="modal-footer" style="padding-left: 0; padding-right: 0; padding-bottom: 0;">
+            <button type="button" class="btn btn-secondary" onclick="closeRequestModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnSubmitRequest">Send Mentorship Request</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimal Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <div style="font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">
+          PehliPeedhi &bull; पहली पीढ़ी
+        </div>
+        <p style="font-size: 0.8125rem; max-width: 480px;">
+          Empowering India's first-generation learners to step into higher education with confidence, guided by graduates who made the journey first.
+        </p>
+      </div>
+      <div class="footer-nav">
+        <a href="#landing" onclick="navigateTo('landing')">About Mission</a>
+        <a href="#find-mentors" onclick="navigateTo('find-mentors')">Browse Mentors</a>
+        <a href="#signup" onclick="navigateTo('signup')">Join as Mentor</a>
+        <a href="#signup" onclick="navigateTo('signup')">Join as Student</a>
+      </div>
+    </div>
+    <div class="container" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 0.75rem; text-align: center; color: var(--text-muted);">
+      PehliPeedhi Prototype &bull; Clean, accessible, mobile-first design for first-generation education equity.
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
