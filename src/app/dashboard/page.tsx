@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
+import RequireAuth from '../../components/RequireAuth';
 
-export default function DashboardPage() {
-  const { role, setRole, requests, updateRequestStatus, studentProfile, mentorProfile } = useApp();
+function DashboardContent() {
+  const { role, requests, updateRequestStatus, studentProfile, mentorProfile } = useApp();
   const [responseModalReqId, setResponseModalReqId] = useState<string | null>(null);
   const [responseNote, setResponseNote] = useState('');
 
@@ -45,23 +46,6 @@ export default function DashboardPage() {
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Switch View:</span>
-            <button
-              type="button"
-              className={`btn btn-sm ${role === 'student' ? 'btn-cream' : 'btn-secondary'}`}
-              onClick={() => setRole('student')}
-            >
-              Student View
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${role === 'mentor' ? 'btn-cream' : 'btn-secondary'}`}
-              onClick={() => setRole('mentor')}
-            >
-              Mentor View
-            </button>
-          </div>
         </div>
 
         {/* STUDENT VIEW */}
@@ -411,5 +395,13 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <RequireAuth>
+      <DashboardContent />
+    </RequireAuth>
   );
 }

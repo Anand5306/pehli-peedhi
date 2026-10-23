@@ -4,8 +4,9 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { FIELDS_OF_STUDY, INDIAN_STATES, LANGUAGES_LIST } from '../../data/mockData';
 import MentorCard from '../../components/MentorCard';
+import RequireAuth from '../../components/RequireAuth';
 
-export default function FindMentorsPage() {
+function FindMentorsContent() {
   const { mentors } = useApp();
 
   const [search, setSearch] = useState('');
@@ -157,5 +158,13 @@ export default function FindMentorsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function FindMentorsPage() {
+  return (
+    <RequireAuth allowedRole="student">
+      <FindMentorsContent />
+    </RequireAuth>
   );
 }

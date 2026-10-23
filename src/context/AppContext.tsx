@@ -37,15 +37,15 @@ interface RegisteredAccount {
 interface AppContextType {
   role: Role;
   currentUser: User | null;
+  isLoaded: boolean;
   studentProfile: StudentProfile;
   mentorProfile: MentorProfile;
   mentors: MentorProfile[];
   requests: MentorshipRequest[];
   activeModalMentor: MentorProfile | null;
   toast: ToastData | null;
-  setRole: (role: Role) => void;
   login: (email: string, password: string) => Promise<AuthResult>;
-  signup: (name: string, email: string, password: string, role: Role) => Promise<AuthResult>;
+  signup: (name: string, email: string, password: string, role: Role, studentDetails?: Omit<StudentProfile, 'fullName' | 'email'>) => Promise<AuthResult>;
   logout: () => void;
   openRequestModal: (mentor: MentorProfile) => void;
   closeRequestModal: () => void;
@@ -62,7 +62,6 @@ const STORAGE_KEY_PREFIX = 'pehlipedhi_v5_';
 const REGISTRY_KEY = 'pehlipedhi_users_registry_v1';
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [role, setRoleState] = useState<Role>('guest');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfile>(INITIAL_STUDENT_PROFILE);
   const [mentorProfile, setMentorProfile] = useState<MentorProfile>(INITIAL_MENTOR_PROFILE);
@@ -71,6 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activeModalMentor, setActiveModalMentor] = useState<MentorProfile | null>(null);
   const [toast, setToast] = useState<ToastData | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const role: Role = currentUser?.role || 'guest';
 
   // Helper to get local accounts registry
   const getLocalAccounts = (): RegisteredAccount[] => {
@@ -98,9 +98,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const savedUser = localStorage.getItem(`${STORAGE_KEY_PREFIX}user`);
       if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setCurrentUser(parsed);
-        setRoleState(parsed.role || 'guest');
+        const parsed = JSON.parse(savedUser) as User;
+        if (parsed.id && (parsed.role === 'student' || parsed.role === 'mentor')) {
+          setCurrentUser(parsed);
+        } else {
+          localStorage.removeItem(`${STORAGE_KEY_PREFIX}user`);
+        }
       }
 
       const savedRequests = localStorage.getItem(`${STORAGE_KEY_PREFIX}requests`);
@@ -142,32 +145,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, 4500);
   };
 
-  const setRole = (newRole: Role) => {
-    setRoleState(newRole);
-    if (newRole === 'mentor') {
-      setCurrentUser({
-        id: 'mentor-1',
-        name: mentorProfile.fullName,
-        email: mentorProfile.email,
-        role: 'mentor',
-        avatar: mentorProfile.avatar
-      });
-      showToast(`Viewing as Mentor: ${mentorProfile.fullName}`, 'info');
-    } else if (newRole === 'student') {
-      setCurrentUser({
-        id: 'student-1',
-        name: studentProfile.fullName,
-        email: studentProfile.email,
-        role: 'student',
-        avatar: 'AK'
-      });
-      showToast(`Viewing as Student: ${studentProfile.fullName}`, 'info');
-    } else {
-      setCurrentUser(null);
-      showToast('Viewing as Visitor', 'info');
-    }
-  };
-
   /**
    * STRICT LOGIN: Validates credentials against Supabase Auth & PostgreSQL DB
    * Rejects invalid or nonexistent accounts.
@@ -198,7 +175,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             .eq('id', authData.user.id)
             .maybeSingle();
 
-          const userRole: Role = (profile?.role as Role) || (authData.user.user_metadata?.role as Role) || 'student';
+          const storedRole = profile?.role || authData.user.user_metadata?.role;
+          const userRole: Role = storedRole === 'mentor' ? 'mentor' : 'student';
           const userName: string = profile?.full_name || authData.user.user_metadata?.full_name || cleanEmail.split('@')[0];
 
           const loggedUser: User = {
@@ -210,7 +188,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           };
 
           setCurrentUser(loggedUser);
-          setRoleState(userRole);
           showToast(`Welcome back, ${userName}`);
           return { ok: true };
         }
@@ -222,7 +199,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         acc => acc.email.toLowerCase() === cleanEmail && acc.password === cleanPassword
       );
 
-      if (matched) {
+      if (matched && (matched.role === 'student' || matched.role === 'mentor')) {
         const loggedUser: User = {
           id: matched.id,
           name: matched.name,
@@ -232,7 +209,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         };
 
         setCurrentUser(loggedUser);
-        setRoleState(matched.role);
         showToast(`Welcome back, ${matched.name}`);
         return { ok: true };
       }
@@ -257,7 +233,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     name: string, 
     email: string, 
     password: string, 
-    userRole: Role
+    userRole: Role,
+    studentDetails?: Omit<StudentProfile, 'fullName' | 'email'>
   ): Promise<AuthResult> => {
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
@@ -269,8 +246,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { ok: false, error: err };
     }
 
+    if (userRole !== 'student' && userRole !== 'mentor') {
+      const err = 'Please select a valid account role.';
+      showToast(err, 'error');
+      return { ok: false, error: err };
+    }
+
     if (cleanPassword.length < 6) {
       const err = 'Password must be at least 6 characters.';
+      showToast(err, 'error');
+      return { ok: false, error: err };
+    }
+
+    if (userRole === 'student' && (!studentDetails || [
+      studentDetails.phone,
+      studentDetails.city,
+      studentDetails.district,
+      studentDetails.state,
+      studentDetails.currentEducationLevel,
+      studentDetails.intendedCourse,
+      studentDetails.preferredLanguage
+    ].some(value => !value.trim()))) {
+      const err = 'Please complete all required student profile details.';
       showToast(err, 'error');
       return { ok: false, error: err };
     }
@@ -286,7 +283,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
           options: {
             data: {
               full_name: cleanName,
-              role: userRole
+              role: userRole,
+              ...(userRole === 'student' && studentDetails ? {
+                phone: studentDetails.phone.trim(),
+                city: studentDetails.city.trim(),
+                district: studentDetails.district.trim(),
+                state: studentDetails.state,
+                current_education_level: studentDetails.currentEducationLevel,
+                intended_course: studentDetails.intendedCourse.trim(),
+                preferred_language: studentDetails.preferredLanguage,
+                first_gen_note: studentDetails.firstGenNote?.trim() || ''
+              } : {})
             }
           }
         });
@@ -313,15 +320,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
             id: createdUserId,
             full_name: cleanName,
             email: cleanEmail,
-            role: userRole
+            role: userRole,
+            phone: userRole === 'student' ? studentDetails?.phone.trim() : undefined
           });
 
-          if (userRole === 'student') {
+          if (userRole === 'student' && studentDetails) {
             await supabase.from('students').upsert({
               id: createdUserId,
-              current_education_level: studentProfile.currentEducationLevel,
-              intended_course: studentProfile.intendedCourse,
-              preferred_language: studentProfile.preferredLanguage
+              city: studentDetails.city.trim(),
+              district: studentDetails.district.trim(),
+              state: studentDetails.state,
+              current_education_level: studentDetails.currentEducationLevel,
+              intended_course: studentDetails.intendedCourse.trim(),
+              preferred_language: studentDetails.preferredLanguage,
+              first_gen_note: studentDetails.firstGenNote?.trim() || ''
             });
           } else if (userRole === 'mentor') {
             await supabase.from('mentors').upsert({
@@ -354,12 +366,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
 
       setCurrentUser(user);
-      setRoleState(userRole);
 
       if (userRole === 'mentor') {
         setMentorProfile(prev => ({ ...prev, fullName: cleanName, email: cleanEmail }));
-      } else {
-        setStudentProfile(prev => ({ ...prev, fullName: cleanName, email: cleanEmail }));
+      } else if (userRole === 'student' && studentDetails) {
+        setStudentProfile({
+          ...studentDetails,
+          fullName: cleanName,
+          email: cleanEmail,
+          firstGenNote: studentDetails.firstGenNote?.trim() || ''
+        });
       }
 
       showToast(`Account created successfully. Welcome, ${cleanName}`);
@@ -376,12 +392,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured && supabase) {
       supabase.auth.signOut().catch(() => {});
     }
+    localStorage.removeItem(`${STORAGE_KEY_PREFIX}user`);
     setCurrentUser(null);
-    setRoleState('guest');
+    setActiveModalMentor(null);
     showToast('Signed out successfully.', 'info');
   };
 
   const openRequestModal = (mentor: MentorProfile) => {
+    if (currentUser?.role !== 'student') {
+      showToast('Sign in with a student account to request mentorship.', 'error');
+      return;
+    }
     setActiveModalMentor(mentor);
   };
 
@@ -390,7 +411,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const submitRequest = (topic: string, language: string, contactMode: string): boolean => {
-    if (!activeModalMentor) return false;
+    if (currentUser?.role !== 'student' || !activeModalMentor) {
+      showToast('Only signed-in students can submit mentorship requests.', 'error');
+      return false;
+    }
 
     const newReq: MentorshipRequest = {
       id: `req-${Date.now()}`,
@@ -422,6 +446,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateRequestStatus = (requestId: string, status: 'Accepted' | 'Declined', note?: string) => {
+    if (currentUser?.role !== 'mentor') {
+      showToast('Only signed-in mentors can respond to requests.', 'error');
+      return;
+    }
+
     setRequests(prev => prev.map(req => {
       if (req.id === requestId) {
         return {
@@ -437,11 +466,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateStudentProfile = (updated: Partial<StudentProfile>) => {
+    if (currentUser?.role !== 'student') {
+      showToast('Sign in with a student account to update this profile.', 'error');
+      return;
+    }
     setStudentProfile(prev => ({ ...prev, ...updated }));
     showToast('Profile changes saved.');
   };
 
   const updateMentorProfile = (updated: Partial<MentorProfile>) => {
+    if (currentUser?.role !== 'mentor') {
+      showToast('Sign in with a mentor account to update this profile.', 'error');
+      return;
+    }
     setMentorProfile(prev => ({ ...prev, ...updated }));
     showToast('Profile changes saved.');
   };
@@ -450,13 +487,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider value={{
       role,
       currentUser,
+      isLoaded,
       studentProfile,
       mentorProfile,
       mentors,
       requests,
       activeModalMentor,
       toast,
-      setRole,
       login,
       signup,
       logout,
