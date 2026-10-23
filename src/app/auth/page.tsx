@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
-import { Role } from '../../types';
+import { Role, StudentProfile } from '../../types';
+import { EDUCATION_LEVELS, INDIAN_STATES, LANGUAGES_LIST } from '../../data/mockData';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -14,6 +15,16 @@ export default function AuthPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [studentDetails, setStudentDetails] = useState<Omit<StudentProfile, 'fullName' | 'email'>>({
+    phone: '',
+    city: '',
+    district: '',
+    state: '',
+    currentEducationLevel: '',
+    intendedCourse: '',
+    preferredLanguage: '',
+    firstGenNote: ''
+  });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,7 +43,7 @@ export default function AuthPage() {
         setErrorMessage(result.error || 'Invalid email or password. Please check your credentials or create an account.');
       }
     } else {
-      const result = await signup(name, email, password, selectedRole);
+      const result = await signup(name, email, password, selectedRole, studentDetails);
       setIsSubmitting(false);
 
       if (result.ok) {
@@ -50,7 +61,7 @@ export default function AuthPage() {
 
   return (
     <div style={{ padding: '4rem 0 6rem', minHeight: 'calc(100vh - 120px)' }}>
-      <div className="container" style={{ maxWidth: '500px' }}>
+      <div className="container" style={{ maxWidth: mode === 'signup' && selectedRole === 'student' ? '760px' : '500px' }}>
         <div className="card" style={{ padding: '2.5rem' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -161,6 +172,123 @@ export default function AuthPage() {
                   onChange={e => setName(e.target.value)}
                 />
               </div>
+            )}
+
+            {mode === 'signup' && selectedRole === 'student' && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="auth-phone">Phone / WhatsApp Number</label>
+                    <input
+                      id="auth-phone"
+                      type="tel"
+                      className="form-input"
+                      required
+                      autoComplete="tel"
+                      placeholder="e.g. +91 98765 43210"
+                      value={studentDetails.phone}
+                      onChange={e => setStudentDetails({ ...studentDetails, phone: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="auth-state">Home State</label>
+                    <select
+                      id="auth-state"
+                      className="form-select"
+                      required
+                      value={studentDetails.state}
+                      onChange={e => setStudentDetails({ ...studentDetails, state: e.target.value })}
+                    >
+                      <option value="">Select a state</option>
+                      {INDIAN_STATES.filter(state => state !== 'All States').map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="auth-city">City</label>
+                    <input
+                      id="auth-city"
+                      type="text"
+                      className="form-input"
+                      required
+                      autoComplete="address-level2"
+                      value={studentDetails.city}
+                      onChange={e => setStudentDetails({ ...studentDetails, city: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="auth-district">District</label>
+                    <input
+                      id="auth-district"
+                      type="text"
+                      className="form-input"
+                      required
+                      value={studentDetails.district}
+                      onChange={e => setStudentDetails({ ...studentDetails, district: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="auth-education">Current Education Level</label>
+                    <select
+                      id="auth-education"
+                      className="form-select"
+                      required
+                      value={studentDetails.currentEducationLevel}
+                      onChange={e => setStudentDetails({ ...studentDetails, currentEducationLevel: e.target.value })}
+                    >
+                      <option value="">Select your education level</option>
+                      {EDUCATION_LEVELS.map(level => <option key={level} value={level}>{level}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="auth-course">Target Degree / Course</label>
+                    <input
+                      id="auth-course"
+                      type="text"
+                      className="form-input"
+                      required
+                      placeholder="e.g. B.Tech Computer Science, MBBS"
+                      value={studentDetails.intendedCourse}
+                      onChange={e => setStudentDetails({ ...studentDetails, intendedCourse: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="auth-language">Preferred Language for Mentorship</label>
+                  <select
+                    id="auth-language"
+                    className="form-select"
+                    required
+                    value={studentDetails.preferredLanguage}
+                    onChange={e => setStudentDetails({ ...studentDetails, preferredLanguage: e.target.value })}
+                  >
+                    <option value="">Select a language</option>
+                    {LANGUAGES_LIST.filter(language => language !== 'All Languages').map(language => (
+                      <option key={language} value={language}>{language}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="auth-first-gen-note">First-Gen Family Background (Optional)</label>
+                  <textarea
+                    id="auth-first-gen-note"
+                    className="form-textarea"
+                    rows={3}
+                    placeholder="Share any background or specific hurdles you are facing."
+                    value={studentDetails.firstGenNote || ''}
+                    onChange={e => setStudentDetails({ ...studentDetails, firstGenNote: e.target.value })}
+                  />
+                </div>
+              </>
             )}
 
             <div className="form-group">

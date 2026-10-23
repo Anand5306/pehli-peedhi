@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { EDUCATION_LEVELS, INDIAN_STATES, LANGUAGES_LIST } from '../../data/mockData';
+import RequireAuth from '../../components/RequireAuth';
 
-export default function ProfilePage() {
-  const { role, setRole, studentProfile, mentorProfile, updateStudentProfile, updateMentorProfile } = useApp();
+function ProfileContent() {
+  const { role, studentProfile, mentorProfile, updateStudentProfile, updateMentorProfile } = useApp();
 
   const [studentForm, setStudentForm] = useState(studentProfile);
   const [mentorForm, setMentorForm] = useState(mentorProfile);
@@ -34,23 +35,6 @@ export default function ProfilePage() {
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>View:</span>
-            <button
-              type="button"
-              className={`btn btn-sm ${role === 'student' ? 'btn-cream' : 'btn-secondary'}`}
-              onClick={() => setRole('student')}
-            >
-              Student
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${role === 'mentor' ? 'btn-cream' : 'btn-secondary'}`}
-              onClick={() => setRole('mentor')}
-            >
-              Mentor
-            </button>
-          </div>
         </div>
 
         {/* STUDENT PROFILE FORM */}
@@ -287,5 +271,13 @@ export default function ProfilePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <RequireAuth>
+      <ProfileContent />
+    </RequireAuth>
   );
 }

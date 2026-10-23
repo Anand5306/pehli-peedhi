@@ -4,6 +4,7 @@ import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '../../../context/AppContext';
+import RequireAuth from '../../../components/RequireAuth';
 
 function MentorDetailContent() {
   const params = useParams();
@@ -163,7 +164,9 @@ export default function MentorDetailPage() {
         <p style={{ color: 'var(--text-secondary)' }}>Loading mentor profile...</p>
       </div>
     }>
-      <MentorDetailContent />
+      <RequireAuth allowedRole="student">
+        <MentorDetailContent />
+      </RequireAuth>
     </Suspense>
   );
 }
