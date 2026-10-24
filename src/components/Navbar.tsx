@@ -56,12 +56,6 @@ export default function Navbar() {
               >
                 Scholarships
               </Link>
-              <Link 
-                href="/#how-it-works" 
-                className="nav-link"
-              >
-                How It Works
-              </Link>
             </>
           ) : (
             <>
@@ -143,7 +137,7 @@ export default function Navbar() {
               <Link href="/auth" className="btn btn-sm btn-secondary">
                 Sign In
               </Link>
-              <Link href="/auth" className="btn btn-sm btn-cream">
+              <Link href="/auth" className="btn btn-sm btn-gold">
                 Get Started
               </Link>
             </>

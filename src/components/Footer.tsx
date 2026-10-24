@@ -25,10 +25,11 @@ export default function Footer() {
           <div>
             <h4 style={{ color: '#F1F5F9', fontSize: '0.9rem', marginBottom: '1rem', fontWeight: 700 }}>Platform</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
-              <Link href="/find-mentors" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Alumni Directory</Link>
-              <Link href="/resources" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Scholarship Guides</Link>
-              <Link href="/dashboard" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Student Portal</Link>
-              <Link href="/auth" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Graduate Mentor Registration</Link>
+              <Link href="/find-mentors" style={{ color: '#CBD5E1', transition: 'color 0.2s' }}>Alumni Directory</Link>
+              <Link href="/entrance-exams" style={{ color: '#E6B86A', fontWeight: 600, transition: 'color 0.2s' }}>Entrance Exams Gateway 🎯</Link>
+              <Link href="/resources" style={{ color: '#CBD5E1', transition: 'color 0.2s' }}>Scholarship Guides</Link>
+              <Link href="/dashboard" style={{ color: '#CBD5E1', transition: 'color 0.2s' }}>Student Portal</Link>
+              <Link href="/auth" style={{ color: '#CBD5E1', transition: 'color 0.2s' }}>Graduate Mentor Registration</Link>
             </div>
           </div>
 

@@ -126,16 +126,16 @@ export default function EntranceExamsPage() {
                     gap: '0.5rem',
                     padding: '0.6rem 1.1rem',
                     borderRadius: 'var(--radius-md)',
-                    border: isSelected ? '1.5px solid #2563EB' : '1px solid #E2E8F0',
+                    border: isSelected ? '1.5px solid var(--gold-primary)' : '1px solid rgba(200, 147, 50, 0.25)',
                     background: isSelected 
-                      ? 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)' 
+                      ? 'linear-gradient(135deg, #0F2744 0%, #1A365D 100%)' 
                       : '#FFFFFF',
-                    color: isSelected ? '#FFFFFF' : 'var(--text-main)',
+                    color: isSelected ? '#FFFFFF' : 'var(--navy-primary)',
                     fontSize: '0.875rem',
-                    fontWeight: isSelected ? 700 : 500,
+                    fontWeight: isSelected ? 700 : 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    boxShadow: isSelected ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
+                    boxShadow: isSelected ? '0 4px 14px rgba(15, 39, 68, 0.25)' : '0 1px 3px rgba(15, 39, 68, 0.04)'
                   }}
                 >
                   <span style={{ fontSize: '1.05rem' }}>{stream.icon}</span>
@@ -148,8 +148,8 @@ export default function EntranceExamsPage() {
                     fontWeight: 700,
                     padding: '0.15rem 0.5rem',
                     borderRadius: '12px',
-                    background: isSelected ? 'rgba(255, 255, 255, 0.25)' : '#F1F5F9',
-                    color: isSelected ? '#FFFFFF' : '#475569'
+                    background: isSelected ? 'var(--gold-gradient)' : 'rgba(15, 39, 68, 0.08)',
+                    color: isSelected ? '#071324' : '#475569'
                   }}>
                     {count}
                   </span>
@@ -408,24 +408,30 @@ export default function EntranceExamsPage() {
                     href={exam.officialUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-primary"
+                    className="btn btn-portal"
                     id={`visit-portal-${exam.id}`}
                     style={{
                       width: '100%',
+                      maxWidth: '100%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '0.5rem',
+                      gap: '0.45rem',
                       fontWeight: 700,
-                      fontSize: '0.875rem',
+                      fontSize: exam.name.length > 15 ? '0.78rem' : '0.85rem',
                       textDecoration: 'none',
-                      background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
                       color: '#FFFFFF',
-                      boxShadow: '0 4px 10px rgba(37, 99, 235, 0.25)'
+                      whiteSpace: 'normal',
+                      textAlign: 'center',
+                      padding: '0.65rem 0.75rem',
+                      lineHeight: 1.35,
+                      boxSizing: 'border-box'
                     }}
                   >
-                    <span>Visit Official {exam.name} Portal</span>
-                    <span style={{ fontSize: '1.1rem' }}>↗</span>
+                    <span style={{ color: '#FFFFFF', textAlign: 'center', lineHeight: 1.35 }}>
+                      Visit Official {exam.name} Portal
+                    </span>
+                    <span style={{ fontSize: '1.05rem', color: '#FFFFFF', flexShrink: 0 }}>↗</span>
                   </a>
                   <div style={{ fontSize: '0.7rem', color: '#94A3B8', textAlign: 'center', marginTop: '0.35rem' }}>
                     Opens verified government portal ({new URL(exam.officialUrl).hostname}) in a new tab

@@ -32,7 +32,7 @@ export async function GET(request: Request) {
           )
           .map((m: any) => {
           const mentorReviews = (dbReviews || [])
-            .filter((rev: any) => rev.mentor_id === m.id)
+            .filter((rev: any) => rev.mentor_id === m.id && rev.student_name !== 'test')
             .map((rev: any) => ({
               id: rev.id,
               mentorId: rev.mentor_id,
@@ -43,6 +43,8 @@ export async function GET(request: Request) {
               meetingTime: rev.meeting_time || rev.meeting_scheduled_time || '',
               meetingScheduledTime: rev.meeting_scheduled_time || '',
               topic: rev.topic || '',
+              comment: rev.comment || '',
+              tags: rev.tags || [],
               date: new Date(rev.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
               requestId: rev.request_id
             }));

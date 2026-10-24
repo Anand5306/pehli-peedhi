@@ -265,7 +265,7 @@ export const ENTRANCE_EXAMS_DATA: EntranceExam[] = [
   },
   {
     id: 'exam-aiims-nursing',
-    name: 'AIIMS B.Sc Nursing & Paramedical',
+    name: 'AIIMS B.Sc Nursing',
     fullName: 'AIIMS Bachelor of Science (Nursing / Paramedical) Entrance Exam',
     stream: 'Medical & Healthcare',
     conductingBody: 'All India Institute of Medical Sciences (AIIMS New Delhi)',

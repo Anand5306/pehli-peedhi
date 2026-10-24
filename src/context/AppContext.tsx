@@ -137,7 +137,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (reqRes.ok) {
           const reqData = await reqRes.json();
           if (reqData.requests && reqData.requests.length > 0) {
-            setRequests(reqData.requests);
+            setRequests(prev => {
+              const fetchedList = reqData.requests;
+              const merged = fetchedList.map((fetched: MentorshipRequest) => {
+                const local = prev.find(p => p.id === fetched.id);
+                if (!local) return fetched;
+
+                const localCompleted = local.status === 'Completed' || !!local.rating || !!local.feedback?.rating;
+                const fetchedCompleted = fetched.status === 'Completed' || !!fetched.rating || !!fetched.feedback?.rating;
+
+                if (localCompleted && !fetchedCompleted) {
+                  return {
+                    ...fetched,
+                    status: 'Completed' as const,
+                    rating: local.rating || local.feedback?.rating,
+                    meetingCompleted: true,
+                    meetingCompletedAt: local.meetingCompletedAt || local.feedback?.meetingCompletedAt,
+                    statusMessage: local.statusMessage || `Session completed & rated ${local.rating || 5} stars.`,
+                    feedback: local.feedback || fetched.feedback
+                  };
+                }
+
+                const localMeetingDone = local.meetingCompleted || !!local.feedback?.meetingCompleted;
+                const fetchedMeetingDone = fetched.meetingCompleted || !!fetched.feedback?.meetingCompleted;
+
+                if (localMeetingDone && !fetchedMeetingDone) {
+                  return {
+                    ...fetched,
+                    meetingCompleted: true,
+                    meetingCompletedAt: local.meetingCompletedAt || local.feedback?.meetingCompletedAt,
+                    status: (fetched.status === 'Pending' ? 'Accepted' : fetched.status) as any,
+                    statusMessage: 'Google Meet concluded. Awaiting student feedback and star rating.',
+                    meetingLink: local.meetingLink || fetched.meetingLink,
+                    meetingDate: local.meetingDate || fetched.meetingDate,
+                    meetingTime: local.meetingTime || fetched.meetingTime
+                  };
+                }
+
+                return fetched;
+              });
+
+              // Retain any locally-stored requests not in the fetched list
+              const fetchedIds = new Set(fetchedList.map((f: any) => f.id));
+              const missingLocal = prev.filter(p => !fetchedIds.has(p.id));
+
+              return [...merged, ...missingLocal];
+            });
           }
         }
       } catch (err) {
@@ -790,9 +835,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.warn('Email dispatch warning:', emailErr);
     }
 
+    const meetFeedbackPayload = {
+      ...(targetReq?.feedback || {}),
+      meetingLink: cleanLink,
+      meetingDate: cleanDate,
+      meetingTime: cleanTime,
+      meetingScheduledTime: cleanTime,
+      meetingEmailSent: true
+    };
+
     // 2. Persist to API and Supabase PostgreSQL
     try {
-      fetch('/api/requests', {
+      await fetch('/api/requests', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -803,9 +857,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           meetingDate: cleanDate,
           meetingTime: cleanTime,
           meetingScheduledTime: cleanTime,
-          statusMessage: `Session scheduled on Google Meet for ${cleanTime}. Email invite dispatched.`
+          statusMessage: `Session scheduled on Google Meet for ${cleanTime}. Email invite dispatched.`,
+          feedback: meetFeedbackPayload
         })
-      }).catch(console.warn);
+      });
     } catch (apiErr) {
       console.warn('API PATCH acceptRequest error:', apiErr);
     }
@@ -816,12 +871,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .update({
           status: 'Accepted',
           mentor_response_note: cleanNote,
-          meeting_link: cleanLink,
-          meeting_date: cleanDate,
-          meeting_time: cleanTime,
-          meeting_scheduled_time: cleanTime,
-          meeting_email_sent: true,
           status_message: `Session scheduled on Google Meet for ${cleanTime}. Email invite dispatched.`,
+          feedback: meetFeedbackPayload,
           updated_at: new Date().toISOString()
         })
         .eq('id', requestId)
@@ -838,9 +889,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       day: 'numeric', 
       month: 'short', 
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      hour: '2-digit', 
+      minute: '2-digit' 
     });
+
+    const completionMsg = 'Google Meet concluded. Awaiting student feedback and star rating.';
 
     setRequests(prev => prev.map(req => {
       if (req.id === requestId) {
@@ -848,29 +901,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ...req,
           meetingCompleted: true,
           meetingCompletedAt: completedAt,
-          statusMessage: 'Google Meet concluded. Awaiting student feedback and star rating.'
+          statusMessage: completionMsg
         };
       }
       return req;
     }));
 
+    const completionFeedback = {
+      ...(targetReq?.feedback || {}),
+      meetingLink: targetReq?.meetingLink || targetReq?.feedback?.meetingLink,
+      meetingDate: targetReq?.meetingDate || targetReq?.feedback?.meetingDate,
+      meetingTime: targetReq?.meetingTime || targetReq?.feedback?.meetingTime,
+      meetingScheduledTime: targetReq?.meetingScheduledTime || targetReq?.feedback?.meetingScheduledTime,
+      meetingCompleted: true,
+      meetingCompletedAt: completedAt,
+      completionNote: completionNote?.trim() || ''
+    };
+
     // Persist to API and Supabase PostgreSQL
     try {
-      fetch('/api/requests', {
+      await fetch('/api/requests', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: requestId,
+          status: 'Accepted',
           meetingCompleted: true,
           meetingCompletedAt: completedAt,
-          statusMessage: 'Google Meet concluded. Awaiting student feedback and star rating.',
-          feedback: {
-            meetingCompleted: true,
-            meetingCompletedAt: completedAt,
-            completionNote: completionNote?.trim() || ''
-          }
+          statusMessage: completionMsg,
+          feedback: completionFeedback
         })
-      }).catch(console.warn);
+      });
     } catch (apiErr) {
       console.warn('API PATCH notifyMeetingOver error:', apiErr);
     }
@@ -879,9 +940,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       supabase
         .from('mentorship_requests')
         .update({
-          meeting_completed: true,
-          meeting_completed_at: new Date().toISOString(),
-          status_message: 'Google Meet concluded. Awaiting student feedback and star rating.',
+          status: 'Accepted',
+          status_message: completionMsg,
+          feedback: completionFeedback,
           updated_at: new Date().toISOString()
         })
         .eq('id', requestId)
@@ -1133,14 +1194,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           })
           .eq('id', targetId)
           .then(null, console.warn);
-
-        supabase
-          .from('mentorship_requests')
-          .update({
-            mentor_name: newName
-          })
-          .eq('mentor_id', targetId)
-          .then(null, console.warn);
       }
     }
 
@@ -1278,16 +1331,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const cleanRating = Math.max(1, Math.min(5, Math.round(rating)));
     const submittedAt = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-    const meetDate = req.meetingDate || submittedAt;
-    const meetTime = req.meetingTime || req.meetingScheduledTime || 'Scheduled Session';
+    const meetDate = req.meetingDate || req.feedback?.meetingDate || submittedAt;
+    const meetTime = req.meetingTime || req.feedback?.meetingTime || req.meetingScheduledTime || 'Scheduled Session';
+    const completedAt = req.meetingCompletedAt || req.feedback?.meetingCompletedAt || submittedAt;
 
     const feedbackObj = {
+      ...(req.feedback || {}),
+      meetingLink: req.meetingLink || req.feedback?.meetingLink,
+      meetingDate: meetDate,
+      meetingTime: meetTime,
+      meetingScheduledTime: req.meetingScheduledTime || req.feedback?.meetingScheduledTime || meetTime,
+      meetingCompleted: true,
+      meetingCompletedAt: completedAt,
       rating: cleanRating,
       comment: comment ? comment.trim() : '',
       tags: tags || [],
-      submittedAt,
-      meetingDate: meetDate,
-      meetingTime: meetTime
+      submittedAt
     };
 
     // 1. Update the mentorship request in state
@@ -1299,6 +1358,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           rating: cleanRating,
           meetingDate: meetDate,
           meetingTime: meetTime,
+          meetingCompleted: true,
+          meetingCompletedAt: completedAt,
           statusMessage: `Session completed & rated ${cleanRating} stars.`,
           feedback: feedbackObj
         };
@@ -1392,13 +1453,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     if (isSupabaseConfigured && supabase) {
+      // Update mentorship_requests table (strictly valid schema columns)
       supabase
         .from('mentorship_requests')
         .update({
           status: 'Completed',
-          rating: cleanRating,
-          meeting_date: meetDate,
-          meeting_time: meetTime,
           status_message: `Session completed & rated ${cleanRating} stars.`,
           feedback: feedbackObj,
           updated_at: new Date().toISOString()
@@ -1408,6 +1467,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const isUuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (isUuidRegex.test(req.mentorId) && isUuidRegex.test(req.studentId)) {
+        // Insert into mentor_reviews (strictly valid schema columns)
         supabase
           .from('mentor_reviews')
           .insert({
@@ -1417,10 +1477,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             student_id: req.studentId,
             student_name: req.studentName,
             rating: cleanRating,
-            meeting_date: meetDate,
-            meeting_time: meetTime,
-            meeting_scheduled_time: req.meetingScheduledTime || meetTime,
-            topic: req.topic,
             comment: comment ? comment.trim() : null,
             tags: tags || []
           })

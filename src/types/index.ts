@@ -115,12 +115,17 @@ export interface MentorshipRequest {
   meetingCompletedAt?: string;
   rating?: number;
   feedback?: {
-    rating: number; // 1 to 5
+    rating?: number; // 1 to 5
     comment?: string;
     tags?: string[];
-    submittedAt: string;
+    submittedAt?: string;
     meetingDate?: string;
     meetingTime?: string;
+    meetingScheduledTime?: string;
+    meetingLink?: string;
+    meetingCompleted?: boolean;
+    meetingCompletedAt?: string;
+    completionNote?: string;
   };
 }
 
