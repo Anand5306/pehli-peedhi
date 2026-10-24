@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
 import { FIELDS_OF_STUDY, INDIAN_STATES, LANGUAGES_LIST } from '../../data/mockData';
 import MentorCard from '../../components/MentorCard';
@@ -66,7 +67,7 @@ export default function FindMentorsPage() {
               id="search-input"
               type="text"
               className="form-input"
-              placeholder="e.g. NIT Trichy, MBBS, CA Articleship, Priya Sharma..."
+              placeholder="e.g. NIT Trichy, MBBS, CA Articleship, Computer Science, Engineering..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -138,7 +139,27 @@ export default function FindMentorsPage() {
         </div>
 
         {/* Mentors Grid */}
-        {filteredMentors.length > 0 ? (
+        {mentors.length === 0 ? (
+          <div className="card" style={{ textAlign: 'center', padding: '4.5rem 2rem' }}>
+            <div className="brand-monogram" style={{ margin: '0 auto 1.25rem', width: '56px', height: '56px', fontSize: '1.5rem' }}>
+              PP
+            </div>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.75rem' }}>
+              No Mentors Registered Yet
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', maxWidth: '480px', margin: '0 auto 1.75rem', fontSize: '0.95rem', lineHeight: 1.6 }}>
+              All artificial and sample profiles have been removed. Only real, verified alumni who create an account or sign in appear here.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <Link href="/auth?role=mentor" className="btn btn-cream">
+                Register as a First-Gen Mentor
+              </Link>
+              <Link href="/auth?role=student" className="btn btn-secondary">
+                Join as Student
+              </Link>
+            </div>
+          </div>
+        ) : filteredMentors.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.75rem' }}>
             {filteredMentors.map(mentor => (
               <MentorCard key={mentor.id} mentor={mentor} />

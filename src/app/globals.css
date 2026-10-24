@@ -465,3 +465,140 @@ a {
     text-align: center;
   }
 }
+
+/* WhatsApp Redirect & Communication Buttons */
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #25D366;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.35);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.btn-whatsapp:hover {
+  background: #20BA5A;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.45);
+  color: #FFFFFF !important;
+}
+
+.btn-whatsapp:active {
+  transform: scale(0.98);
+}
+
+.btn-email-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: #FFFFFF;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-glass);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  line-height: 1.2;
+}
+
+.btn-email-link:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-glass-hover);
+  color: var(--text-main) !important;
+  transform: translateY(-1px);
+}
+
+/* Google Meet & Meeting Loop Styles */
+.btn-gmeet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #1A73E8;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.35);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.btn-gmeet:hover {
+  background: #1557B0;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 14px rgba(26, 115, 232, 0.45);
+  color: #FFFFFF !important;
+}
+
+.btn-gmeet:active {
+  transform: scale(0.98);
+}
+
+.btn-notify-over {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #FFFFFF !important;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.btn-notify-over:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.5);
+  color: #FFFFFF !important;
+}
+
+.btn-notify-over:active {
+  transform: scale(0.98);
+}
+
+.feedback-notification-card {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 1.5px solid #F59E0B;
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+  animation: pulseLight 3s infinite ease-in-out;
+}
+
+@keyframes pulseLight {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    box-shadow: 0 6px 22px rgba(245, 158, 11, 0.35);
+  }
+}
+
+

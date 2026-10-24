@@ -1,13 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useApp } from '../context/AppContext';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { currentUser, role, logout } = useApp();
+  const router = useRouter();
+  const { currentUser, role, logout, studentProfile, mentorProfile } = useApp();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Defer auth state so initial client render matches server SSR exactly
+  const user = mounted ? currentUser : null;
+  const currentRole = mounted ? role : 'guest';
+  const isVerified = mounted && ((role === 'mentor' && mentorProfile.verified) || (role === 'student' && studentProfile.verified));
 
   return (
     <header className="site-header">
@@ -23,7 +34,7 @@ export default function Navbar() {
 
         {/* Dynamic Navigation Links */}
         <nav className="site-nav">
-          {!currentUser ? (
+          {!user ? (
             <>
               <Link 
                 href="/" 
@@ -52,7 +63,7 @@ export default function Navbar() {
               >
                 Dashboard
               </Link>
-              {role === 'student' && (
+              {currentRole === 'student' && (
                 <Link 
                   href="/find-mentors" 
                   className={`nav-link ${pathname === '/find-mentors' ? 'active' : ''}`}
@@ -78,15 +89,37 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="header-actions">
-          {currentUser ? (
+          {user ? (
             <>
-              <div className="badge badge-glass">
-                {currentUser.role === 'mentor' ? 'Mentor' : 'Student'}: {currentUser.name}
+              <div className="badge badge-glass" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>{user.role === 'mentor' ? 'Mentor' : 'Student'}: {user.name}</span>
+                {isVerified && (
+                  <span 
+                    title="Verified Account" 
+                    style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      width: '16px', 
+                      height: '16px', 
+                      borderRadius: '50%', 
+                      background: '#10B981', 
+                      color: '#ffffff', 
+                      fontSize: '10px', 
+                      fontWeight: 800 
+                    }}
+                  >
+                    ✓
+                  </span>
+                )}
               </div>
               <button 
                 type="button" 
                 className="btn btn-sm btn-secondary" 
-                onClick={logout}
+                onClick={() => {
+                  logout();
+                  router.push('/');
+                }}
               >
                 Sign Out
               </button>

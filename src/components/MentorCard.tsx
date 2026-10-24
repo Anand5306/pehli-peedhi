@@ -36,7 +36,7 @@ export default function MentorCard({ mentor }: { mentor: MentorProfile }) {
             </h3>
             {mentor.verified && (
               <span className="badge badge-success" style={{ fontSize: '0.6875rem' }}>
-                Verified Alumni
+                ✓ Verified Alumni
               </span>
             )}
           </div>
@@ -45,6 +45,20 @@ export default function MentorCard({ mentor }: { mentor: MentorProfile }) {
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {mentor.graduationCollege}
+          </div>
+
+          {/* Star Rating & Reviews */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '5px' }}>
+            <div style={{ display: 'flex', color: '#F59E0B', fontSize: '0.9rem', letterSpacing: '0.5px' }}>
+              {'★'.repeat(Math.round(mentor.rating || 5))}
+              {'☆'.repeat(5 - Math.round(mentor.rating || 5))}
+            </div>
+            <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-main)' }}>
+              {(mentor.rating || 5.0).toFixed(1)}
+            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              ({mentor.reviewCount || mentor.reviews?.length || 0} reviews)
+            </span>
           </div>
         </div>
       </div>

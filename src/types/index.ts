@@ -1,5 +1,18 @@
 export type Role = 'student' | 'mentor' | 'guest';
 
+export type VerificationStatus = 'unverified' | 'pending' | 'verified';
+
+export interface VerificationData {
+  status: VerificationStatus;
+  documentType?: string;
+  documentNumber?: string;
+  institutionName?: string;
+  documentFileName?: string;
+  firstGenDeclaration?: boolean;
+  verifiedAt?: string;
+  submittedAt: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -7,6 +20,7 @@ export interface User {
   role: Role;
   phone?: string;
   avatar?: string;
+  verified?: boolean;
 }
 
 export interface StudentProfile {
@@ -20,6 +34,25 @@ export interface StudentProfile {
   intendedCourse: string;
   preferredLanguage: string;
   firstGenNote?: string;
+  verified?: boolean;
+  verificationStatus?: VerificationStatus;
+  verificationData?: VerificationData;
+}
+
+export interface MentorReview {
+  id: string;
+  mentorId: string;
+  studentId: string;
+  studentName: string;
+  rating: number; // 1 to 5 stars
+  comment?: string;
+  tags?: string[];
+  date: string;
+  meetingDate?: string;
+  meetingTime?: string;
+  meetingScheduledTime?: string;
+  topic?: string;
+  requestId?: string;
 }
 
 export interface MentorProfile {
@@ -43,6 +76,11 @@ export interface MentorProfile {
   verified: boolean;
   menteeCount: number;
   featured?: boolean;
+  verificationStatus?: VerificationStatus;
+  verificationData?: VerificationData;
+  rating?: number; // Average star rating e.g. 4.9
+  reviewCount?: number; // Total count of student reviews
+  reviews?: MentorReview[];
 }
 
 export interface MentorshipRequest {
@@ -64,9 +102,25 @@ export interface MentorshipRequest {
   studentLanguage: string;
   preferredContact: string;
   date: string;
-  status: 'Pending' | 'Accepted' | 'Declined';
+  status: 'Pending' | 'Accepted' | 'Declined' | 'Completed';
   statusMessage?: string;
   mentorResponseNote?: string;
+  meetingLink?: string;
+  meetingDate?: string;
+  meetingTime?: string;
+  meetingScheduledTime?: string;
+  meetingEmailSent?: boolean;
+  meetingCompleted?: boolean;
+  meetingCompletedAt?: string;
+  rating?: number;
+  feedback?: {
+    rating: number; // 1 to 5
+    comment?: string;
+    tags?: string[];
+    submittedAt: string;
+    meetingDate?: string;
+    meetingTime?: string;
+  };
 }
 
 export interface ResourceItem {

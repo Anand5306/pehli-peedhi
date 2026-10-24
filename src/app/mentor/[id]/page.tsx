@@ -76,8 +76,22 @@ function MentorDetailContent() {
               <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
                 {mentor.degree}
               </div>
-              <div style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                 {mentor.graduationCollege} &bull; Class of {mentor.graduationYear}
+              </div>
+
+              {/* Star Rating Badge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', color: '#F59E0B', fontSize: '1.1rem', letterSpacing: '1px' }}>
+                  {'★'.repeat(Math.round(mentor.rating || 5))}
+                  {'☆'.repeat(5 - Math.round(mentor.rating || 5))}
+                </div>
+                <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)' }}>
+                  {(mentor.rating || 5.0).toFixed(1)} / 5.0
+                </span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  &bull; {mentor.reviewCount || mentor.reviews?.length || 0} Student Reviews
+                </span>
               </div>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
@@ -150,6 +164,141 @@ function MentorDetailContent() {
               Guidance on PehliPeedhi is 100% free, volunteer-driven, and designed to support first-generation college aspirants.
             </div>
           </div>
+        </div>
+
+        {/* Student Reviews & Testimonials Section */}
+        {/* Mentorship Meetings History & Ratings Section */}
+        <div className="card" style={{ marginTop: '2rem', padding: '2.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                  Mentorship Meets History &amp; Ratings
+                </h2>
+                <span className="badge badge-cream" style={{ fontSize: '0.75rem' }}>
+                  {mentor.reviews?.length || mentor.reviewCount || 0} Sessions Completed
+                </span>
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px', margin: 0 }}>
+                Verified history of 1-on-1 higher education guidance meetings conducted by this mentor.
+              </p>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              background: 'linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%)',
+              padding: '0.65rem 1.25rem',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid #FCD34D'
+            }}>
+              <span style={{ fontSize: '1.75rem', fontWeight: 900, color: '#92400E', lineHeight: 1 }}>
+                {(mentor.rating || 5.0).toFixed(1)}
+              </span>
+              <div>
+                <div style={{ color: '#F59E0B', fontSize: '0.95rem', letterSpacing: '1px' }}>
+                  {'★'.repeat(Math.round(mentor.rating || 5))}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#B45309', fontWeight: 700 }}>
+                  AVERAGE SESSION RATING
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {mentor.reviews && mentor.reviews.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+              {mentor.reviews.map(review => (
+                <div 
+                  key={review.id} 
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    border: '1px solid var(--border-glass)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: '#EFF6FF',
+                        color: '#1D4ED8',
+                        border: '1px solid #BFDBFE',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.9rem',
+                        fontWeight: 800
+                      }}>
+                        📹
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.925rem', color: 'var(--text-main)' }}>
+                          Mentorship Session with {review.studentName}
+                        </div>
+                        <span className="badge badge-success" style={{ fontSize: '0.6875rem', marginTop: '2px' }}>
+                          ✓ Completed &amp; Verified
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ color: '#F59E0B', fontSize: '1rem', letterSpacing: '1px' }}>
+                        {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#92400E' }}>
+                        {review.rating} / 5 Rating
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Meeting Date & Time Details */}
+                  <div style={{ 
+                    background: '#F8FAFC', 
+                    border: '1px solid #E2E8F0', 
+                    borderRadius: 'var(--radius-sm)', 
+                    padding: '0.75rem 1rem', 
+                    fontSize: '0.8125rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1E293B' }}>
+                      <span>📅</span>
+                      <strong>Meet Date:</strong>
+                      <span style={{ color: '#334155' }}>{review.meetingDate || review.date}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1E293B' }}>
+                      <span>⏰</span>
+                      <strong>Meet Time:</strong>
+                      <span style={{ color: '#334155' }}>{review.meetingTime || review.meetingScheduledTime || 'Scheduled Session'}</span>
+                    </div>
+
+                    {review.topic && (
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', color: '#1E293B', marginTop: '2px' }}>
+                        <span>🎓</span>
+                        <strong>Topic:</strong>
+                        <span style={{ color: '#475569', fontStyle: 'italic' }}>&ldquo;{review.topic}&rdquo;</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              No mentorship sessions completed yet. Request a guidance session to schedule the first meeting!
+            </div>
+          )}
         </div>
       </div>
     </div>
