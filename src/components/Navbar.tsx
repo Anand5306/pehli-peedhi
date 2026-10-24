@@ -25,7 +25,9 @@ export default function Navbar() {
       <div className="container header-inner">
         {/* Brand Link */}
         <Link href="/" className="brand-link">
-          <div className="brand-monogram">PP</div>
+          <div className="brand-monogram">
+            <img src="/logo.png" alt="PehliPeedhi Logo" />
+          </div>
           <div className="brand-titles">
             <span className="brand-name">PehliPeedhi</span>
             <span className="brand-sub">Mentorship Network</span>
@@ -43,16 +45,22 @@ export default function Navbar() {
                 Overview
               </Link>
               <Link 
-                href="/#how-it-works" 
-                className="nav-link"
+                href="/entrance-exams" 
+                className={`nav-link ${pathname === '/entrance-exams' ? 'active' : ''}`}
               >
-                How It Works
+                Entrance Exams
               </Link>
               <Link 
                 href="/resources" 
                 className={`nav-link ${pathname === '/resources' ? 'active' : ''}`}
               >
                 Scholarships
+              </Link>
+              <Link 
+                href="/#how-it-works" 
+                className="nav-link"
+              >
+                How It Works
               </Link>
             </>
           ) : (
@@ -71,6 +79,12 @@ export default function Navbar() {
                   Find Mentors
                 </Link>
               )}
+              <Link 
+                href="/entrance-exams" 
+                className={`nav-link ${pathname === '/entrance-exams' ? 'active' : ''}`}
+              >
+                Entrance Exams
+              </Link>
               <Link 
                 href="/resources" 
                 className={`nav-link ${pathname === '/resources' ? 'active' : ''}`}
@@ -118,7 +132,7 @@ export default function Navbar() {
                 className="btn btn-sm btn-secondary" 
                 onClick={() => {
                   logout();
-                  router.push('/');
+                  router.replace('/');
                 }}
               >
                 Sign Out

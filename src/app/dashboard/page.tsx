@@ -111,7 +111,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (isLoaded && (!currentUser || role === 'guest')) {
-      router.push('/auth');
+      router.replace('/');
     }
   }, [isLoaded, currentUser, role, router]);
 
@@ -159,11 +159,11 @@ export default function DashboardPage() {
 
   mentorRequests.forEach(req => {
     const star = req.rating || req.feedback?.rating;
-    if (star || req.status === 'Completed' || req.meetingCompleted) {
+    if (star) {
       const key = req.id;
       if (!allReviewsMap.has(key)) {
         allReviewsMap.set(key, {
-          rating: Number(star) || 5,
+          rating: Number(star),
           meetingDate: req.meetingDate || req.feedback?.meetingDate || req.date,
           meetingTime: req.meetingTime || req.feedback?.meetingTime || req.meetingScheduledTime || 'Scheduled Session',
           topic: req.topic
@@ -179,13 +179,13 @@ export default function DashboardPage() {
     mentorProfile.reviewCount || 0
   );
 
-  let displayRating = 5.0;
+  let displayRating = 0;
   if (allReviewsList.length > 0) {
-    const sum = allReviewsList.reduce((acc, curr) => acc + (Number(curr.rating) || 5), 0);
+    const sum = allReviewsList.reduce((acc, curr) => acc + (Number(curr.rating) || 0), 0);
     displayRating = Number((sum / allReviewsList.length).toFixed(1));
-  } else if (activeMentorRecord?.rating) {
+  } else if (activeMentorRecord?.rating && Number(activeMentorRecord.rating) > 0 && (activeMentorRecord.reviewCount || 0) > 0) {
     displayRating = Number(activeMentorRecord.rating);
-  } else if (mentorProfile?.rating) {
+  } else if (mentorProfile?.rating && Number(mentorProfile.rating) > 0 && (mentorProfile.reviewCount || 0) > 0) {
     displayRating = Number(mentorProfile.rating);
   }
 
@@ -247,8 +247,8 @@ export default function DashboardPage() {
       <div style={{ padding: '6rem 0', textAlign: 'center' }}>
         <div className="container" style={{ maxWidth: '480px' }}>
           <div className="card" style={{ padding: '2.5rem' }}>
-            <div className="brand-monogram" style={{ margin: '0 auto 1rem', width: '48px', height: '48px', fontSize: '1.25rem' }}>
-              PP
+            <div className="brand-monogram" style={{ margin: '0 auto 1rem', width: '48px', height: '48px' }}>
+              <img src="/logo.png" alt="PehliPeedhi Logo" />
             </div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
               Authentication Required
@@ -439,13 +439,18 @@ export default function DashboardPage() {
             </div>
 
             {/* Requests List Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
                 My Mentorship Requests &amp; Responses
               </h2>
-              <Link href="/find-mentors" className="btn btn-sm btn-cream">
-                Browse Verified Mentors
-              </Link>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <Link href="/entrance-exams" className="btn btn-sm btn-secondary" id="student-dash-entrance-exams-btn">
+                  🎯 Entrance Exams Directory
+                </Link>
+                <Link href="/find-mentors" className="btn btn-sm btn-cream">
+                  Browse Verified Mentors
+                </Link>
+              </div>
             </div>
 
             {studentRequests.length > 0 ? (
@@ -860,7 +865,11 @@ export default function DashboardPage() {
               <div className="card">
                 <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 600 }}>Student Ratings</div>
                 <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span style={{ color: '#F59E0B' }}>★</span>
+                  <span style={{ color: '#F59E0B', letterSpacing: '0.5px' }}>
+                    {totalReviewsCount > 0 
+                      ? '★'.repeat(Math.min(5, Math.max(0, Math.round(displayRating)))) + '☆'.repeat(5 - Math.min(5, Math.max(0, Math.round(displayRating))))
+                      : '☆☆☆☆☆'}
+                  </span>
                   <span>{displayRating.toFixed(1)} / 5.0</span>
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>

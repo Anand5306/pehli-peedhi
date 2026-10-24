@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   description: 'Connecting first-generation students across India with verified graduate mentors who walked the same journey. 100% free guidance on college admissions, scholarships, and careers.',
   keywords: ['first-generation learners', 'mentorship India', 'college guidance', 'national scholarship portal', 'NSP scholarship', 'engineering admission', 'NEET counseling'],
   authors: [{ name: 'PehliPeedhi Education Foundation' }],
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({

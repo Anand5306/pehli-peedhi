@@ -24,6 +24,7 @@ export interface User {
 }
 
 export interface StudentProfile {
+  id?: string;
   fullName: string;
   email: string;
   phone: string;
@@ -134,3 +135,22 @@ export interface ResourceItem {
   officialLink: string;
   featuredTag?: string;
 }
+
+export interface EntranceExam {
+  id: string;
+  name: string;
+  fullName: string;
+  stream: string;
+  conductingBody: string;
+  targetCourses: string;
+  eligibility: string;
+  frequency: string;
+  examMode: string;
+  keyDates: string;
+  officialUrl: string;
+  applicationFee?: string;
+  firstGenTips?: string;
+  featuredTag?: string;
+  badgeColor?: string;
+}
+

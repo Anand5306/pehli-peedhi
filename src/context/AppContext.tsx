@@ -196,7 +196,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (matched) {
       setMentorProfile(prev => {
         const reviewCount = matched.reviewCount ?? matched.reviews?.length ?? prev.reviewCount ?? 0;
-        const rating = matched.rating ?? prev.rating ?? 5.0;
+        const rating = reviewCount > 0 
+          ? (matched.rating !== undefined ? matched.rating : (prev.rating !== undefined ? prev.rating : 0))
+          : 0;
         if (prev.reviewCount !== reviewCount || prev.rating !== rating || prev.reviews?.length !== matched.reviews?.length || !prev.id) {
           return {
             ...prev,
@@ -331,10 +333,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }
 
             const revCount = mentorDbReviews.length || mentorDbData?.review_count || 0;
-            let mentorAvgRating = Number(mentorDbData?.rating) || 5.0;
+            let mentorAvgRating = 0;
             if (mentorDbReviews.length > 0) {
-              const sum = mentorDbReviews.reduce((acc: number, r: any) => acc + (Number(r.rating) || 5), 0);
+              const sum = mentorDbReviews.reduce((acc: number, r: any) => acc + (Number(r.rating) || 0), 0);
               mentorAvgRating = Number((sum / mentorDbReviews.length).toFixed(1));
+            } else if (revCount > 0 && mentorDbData?.rating) {
+              mentorAvgRating = Number(mentorDbData.rating) || 0;
             }
 
             const formattedReviews: MentorReview[] = mentorDbReviews.map((r: any) => ({
@@ -589,7 +593,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           verified: false,
           verificationStatus: 'unverified',
           menteeCount: 0,
-          rating: 5.0,
+          rating: 0,
           reviewCount: 0,
           reviews: []
         };
@@ -889,66 +893,223 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateStudentProfile = (updated: Partial<StudentProfile>) => {
-    setStudentProfile(prev => {
-      const merged = { ...prev, ...updated };
-      if (isSupabaseConfigured && supabase && currentUser?.id) {
+    const newName = updated.fullName?.trim() || studentProfile.fullName;
+    const targetEmail = updated.email?.trim() || studentProfile.email || currentUser?.email;
+    const targetId = currentUser?.id || studentProfile.id;
+
+    const mergedStudent: StudentProfile = {
+      ...studentProfile,
+      ...updated,
+      fullName: newName
+    };
+
+    // 1. Update studentProfile state
+    setStudentProfile(mergedStudent);
+
+    // 2. Update currentUser state & localStorage immediately so new name reflects everywhere
+    if (newName && currentUser) {
+      const updatedUser: User = {
+        ...currentUser,
+        name: newName,
+        avatar: newName.slice(0, 2).toUpperCase()
+      };
+      setCurrentUser(updatedUser);
+      try {
+        localStorage.setItem(`${STORAGE_KEY_PREFIX}user`, JSON.stringify(updatedUser));
+      } catch {}
+    }
+
+    // 3. Update local accounts registry
+    if (targetEmail) {
+      try {
+        const accounts = getLocalAccounts();
+        const updatedAccounts = accounts.map(a => 
+          a.email.toLowerCase() === targetEmail.toLowerCase() ? { ...a, name: newName } : a
+        );
+        localStorage.setItem(REGISTRY_KEY, JSON.stringify(updatedAccounts));
+      } catch {}
+    }
+
+    // 4. Update requests in local state
+    setRequests(prev => prev.map(r => {
+      if (r.studentId === targetId || (targetEmail && r.studentEmail?.toLowerCase() === targetEmail.toLowerCase())) {
+        return { ...r, studentName: newName };
+      }
+      return r;
+    }));
+
+    // 5. Persist to PostgreSQL database via API
+    fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: targetId,
+        email: targetEmail,
+        role: 'student',
+        fullName: newName,
+        phone: mergedStudent.phone,
+        city: mergedStudent.city,
+        district: mergedStudent.district,
+        state: mergedStudent.state,
+        currentEducationLevel: mergedStudent.currentEducationLevel,
+        intendedCourse: mergedStudent.intendedCourse,
+        preferredLanguage: mergedStudent.preferredLanguage,
+        firstGenNote: mergedStudent.firstGenNote
+      })
+    }).catch(console.warn);
+
+    // 6. Direct Supabase update if configured
+    if (isSupabaseConfigured && supabase) {
+      try {
+        (supabase.auth as any).updateUser({ data: { full_name: newName } }).catch(() => {});
+      } catch {}
+
+      if (targetId) {
         supabase
           .from('profiles')
           .update({
-            full_name: merged.fullName,
-            phone: merged.phone,
-            city: merged.city,
-            district: merged.district,
-            state: merged.state,
+            full_name: newName,
+            phone: mergedStudent.phone,
+            city: mergedStudent.city,
+            district: mergedStudent.district,
+            state: mergedStudent.state,
             updated_at: new Date().toISOString()
           })
-          .eq('id', currentUser.id)
+          .eq('id', targetId)
           .then(null, console.warn);
 
         supabase
           .from('students')
           .update({
-            city: merged.city,
-            district: merged.district,
-            state: merged.state,
-            current_education_level: merged.currentEducationLevel,
-            intended_course: merged.intendedCourse,
-            preferred_language: merged.preferredLanguage,
-            first_gen_note: merged.firstGenNote,
+            city: mergedStudent.city,
+            district: mergedStudent.district,
+            state: mergedStudent.state,
+            current_education_level: mergedStudent.currentEducationLevel,
+            intended_course: mergedStudent.intendedCourse,
+            preferred_language: mergedStudent.preferredLanguage,
+            first_gen_note: mergedStudent.firstGenNote,
             updated_at: new Date().toISOString()
           })
-          .eq('id', currentUser.id)
+          .eq('id', targetId)
           .then(null, console.warn);
       }
-      return merged;
-    });
-    showToast('Profile changes saved.');
+    }
+
+    showToast('Name and profile details updated in database.', 'success');
   };
 
   const updateMentorProfile = (updated: Partial<MentorProfile>) => {
-    setMentorProfile(prev => {
-      const merged: MentorProfile = { ...prev, ...updated };
-      setMentors(prevMentors => {
-        const exists = prevMentors.some(m => (merged.id && m.id === merged.id) || (merged.email && m.email.toLowerCase() === merged.email.toLowerCase()));
-        if (exists) {
-          return prevMentors.map(m => ((merged.id && m.id === merged.id) || (merged.email && m.email.toLowerCase() === merged.email.toLowerCase())) ? { ...m, ...merged } : m);
-        }
-        if (merged.fullName) {
-          return [...prevMentors, merged];
-        }
-        return prevMentors;
-      });
+    const newName = updated.fullName?.trim() || mentorProfile.fullName;
+    const targetEmail = updated.email?.trim() || mentorProfile.email || currentUser?.email;
+    const targetId = currentUser?.id || mentorProfile.id;
 
-      if (isSupabaseConfigured && supabase && (merged.id || currentUser?.id)) {
-        const targetId = merged.id || currentUser?.id;
+    const mergedMentor: MentorProfile = {
+      ...mentorProfile,
+      ...updated,
+      fullName: newName,
+      avatar: newName.slice(0, 2).toUpperCase()
+    };
+
+    // 1. Update mentorProfile state
+    setMentorProfile(mergedMentor);
+
+    // 2. Update currentUser state & localStorage
+    if (newName && currentUser) {
+      const updatedUser: User = {
+        ...currentUser,
+        name: newName,
+        avatar: newName.slice(0, 2).toUpperCase()
+      };
+      setCurrentUser(updatedUser);
+      try {
+        localStorage.setItem(`${STORAGE_KEY_PREFIX}user`, JSON.stringify(updatedUser));
+      } catch {}
+    }
+
+    // 3. Update mentors list in state
+    setMentors(prev => {
+      const exists = prev.some(m => 
+        (targetId && m.id === targetId) || 
+        (targetEmail && m.email?.toLowerCase() === targetEmail.toLowerCase()) ||
+        m.fullName.toLowerCase() === mentorProfile.fullName?.toLowerCase()
+      );
+      if (exists) {
+        return prev.map(m => {
+          const isMatch = (targetId && m.id === targetId) || 
+            (targetEmail && m.email?.toLowerCase() === targetEmail.toLowerCase()) ||
+            m.fullName.toLowerCase() === mentorProfile.fullName?.toLowerCase();
+          if (isMatch) {
+            return {
+              ...m,
+              ...mergedMentor,
+              fullName: newName,
+              avatar: newName.slice(0, 2).toUpperCase()
+            };
+          }
+          return m;
+        });
+      }
+      return [...prev, mergedMentor];
+    });
+
+    // 4. Update local accounts registry
+    if (targetEmail) {
+      try {
+        const accounts = getLocalAccounts();
+        const updatedAccounts = accounts.map(a => 
+          a.email.toLowerCase() === targetEmail.toLowerCase() ? { ...a, name: newName } : a
+        );
+        localStorage.setItem(REGISTRY_KEY, JSON.stringify(updatedAccounts));
+      } catch {}
+    }
+
+    // 5. Update requests in local state
+    setRequests(prev => prev.map(r => {
+      if (r.mentorId === targetId || (targetEmail && r.mentorEmail?.toLowerCase() === targetEmail.toLowerCase())) {
+        return { ...r, mentorName: newName };
+      }
+      return r;
+    }));
+
+    // 6. Persist to PostgreSQL database via API
+    fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: targetId,
+        email: targetEmail,
+        role: 'mentor',
+        fullName: newName,
+        phone: mergedMentor.phone,
+        city: mergedMentor.city,
+        district: mergedMentor.district,
+        state: mergedMentor.state,
+        graduationCollege: mergedMentor.graduationCollege,
+        degree: mergedMentor.degree,
+        field: mergedMentor.field,
+        expertise: mergedMentor.expertise,
+        graduationYear: mergedMentor.graduationYear,
+        languages: mergedMentor.languages,
+        shortBio: mergedMentor.shortBio,
+        availability: mergedMentor.availability
+      })
+    }).catch(console.warn);
+
+    // 7. Direct Supabase update if configured
+    if (isSupabaseConfigured && supabase) {
+      try {
+        (supabase.auth as any).updateUser({ data: { full_name: newName } }).catch(() => {});
+      } catch {}
+
+      if (targetId) {
         supabase
           .from('profiles')
           .update({
-            full_name: merged.fullName,
-            phone: merged.phone,
-            city: merged.city,
-            district: merged.district,
-            state: merged.state,
+            full_name: newName,
+            phone: mergedMentor.phone,
+            city: mergedMentor.city,
+            district: mergedMentor.district,
+            state: mergedMentor.state,
             updated_at: new Date().toISOString()
           })
           .eq('id', targetId)
@@ -957,26 +1118,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
         supabase
           .from('mentors')
           .update({
-            graduation_college: merged.graduationCollege,
-            degree: merged.degree,
-            field: merged.field,
-            expertise: merged.expertise,
-            graduation_year: merged.graduationYear,
-            languages: merged.languages,
-            short_bio: merged.shortBio,
-            availability: merged.availability,
-            city: merged.city,
-            district: merged.district,
-            state: merged.state,
+            graduation_college: mergedMentor.graduationCollege,
+            degree: mergedMentor.degree,
+            field: mergedMentor.field,
+            expertise: mergedMentor.expertise,
+            graduation_year: mergedMentor.graduationYear,
+            languages: mergedMentor.languages,
+            short_bio: mergedMentor.shortBio,
+            availability: mergedMentor.availability,
+            city: mergedMentor.city,
+            district: mergedMentor.district,
+            state: mergedMentor.state,
             updated_at: new Date().toISOString()
           })
           .eq('id', targetId)
           .then(null, console.warn);
-      }
 
-      return merged;
-    });
-    showToast('Profile changes saved.');
+        supabase
+          .from('mentorship_requests')
+          .update({
+            mentor_name: newName
+          })
+          .eq('mentor_id', targetId)
+          .then(null, console.warn);
+      }
+    }
+
+    showToast('Name and mentor profile updated in database.', 'success');
   };
 
   const verifyAccount = (data: VerificationData) => {

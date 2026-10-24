@@ -50,6 +50,9 @@ export default function HomePage() {
             <Link href="/auth" className="btn btn-lg btn-secondary">
               Join as a Mentor
             </Link>
+            <Link href="/entrance-exams" className="btn btn-lg btn-outline" style={{ background: '#FFFFFF', borderColor: '#2563EB', color: '#1D4ED8', fontWeight: 700 }}>
+              🎯 Entrance Exams Directory
+            </Link>
             <Link href="/resources" className="btn btn-lg btn-outline">
               Explore Scholarships
             </Link>
@@ -98,6 +101,21 @@ export default function HomePage() {
                 Mentor credentials and degree certificates are checked. Student contact details remain protected and are only shared upon mutual confirmation.
               </p>
             </div>
+
+            <Link href="/entrance-exams" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div className="card card-hover" style={{ borderLeft: '4px solid #2563EB', background: 'linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%)', height: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span className="badge badge-cream" style={{ fontSize: '0.72rem' }}>Stream Directory</span>
+                  <span style={{ fontSize: '1rem', color: '#2563EB', fontWeight: 800 }}>↗</span>
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.65rem', color: '#1E40AF' }}>
+                  Entrance Exams Hub
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                  Choose your stream (Engineering, Medical, CUET, Law, Commerce, Design, Science, Defense) to explore eligibility, key dates, and direct links to official government portals.
+                </p>
+              </div>
+            </Link>
           </div>
         </div>
       </section>

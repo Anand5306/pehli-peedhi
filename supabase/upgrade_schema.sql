@@ -217,4 +217,27 @@ DELETE FROM public.mentors WHERE id = '443f5649-17c2-4d34-a253-43cb925c72d5';
 DELETE FROM public.profiles WHERE id = '443f5649-17c2-4d34-a253-43cb925c72d5';
 DELETE FROM auth.users WHERE id = '443f5649-17c2-4d34-a253-43cb925c72d5' OR email = 'shashwatanand5306@gmail.com';
 
+-- ============================================================================
+-- 10. RESET UNRATED MENTORS RATING TO 0.00 (DISPLAY 0 STARS)
+-- ============================================================================
+ALTER TABLE public.mentors ALTER COLUMN rating SET DEFAULT 0.00;
 
+-- Reset rating to 0.00 for mentors with 0 reviews or no recorded reviews in mentor_reviews
+UPDATE public.mentors
+SET rating = 0.00, review_count = 0
+WHERE id NOT IN (SELECT DISTINCT mentor_id FROM public.mentor_reviews);
+
+-- For mentors who DO have reviews, accurately calculate their average rating and count
+UPDATE public.mentors m
+SET 
+  rating = sub.avg_rating,
+  review_count = sub.cnt
+FROM (
+  SELECT 
+    mentor_id,
+    ROUND(AVG(rating), 2) AS avg_rating,
+    COUNT(*) AS cnt
+  FROM public.mentor_reviews
+  GROUP BY mentor_id
+) sub
+WHERE m.id = sub.mentor_id;

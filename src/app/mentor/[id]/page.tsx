@@ -81,18 +81,27 @@ function MentorDetailContent() {
               </div>
 
               {/* Star Rating Badge */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', color: '#F59E0B', fontSize: '1.1rem', letterSpacing: '1px' }}>
-                  {'★'.repeat(Math.round(mentor.rating || 5))}
-                  {'☆'.repeat(5 - Math.round(mentor.rating || 5))}
-                </div>
-                <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)' }}>
-                  {(mentor.rating || 5.0).toFixed(1)} / 5.0
-                </span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  &bull; {mentor.reviewCount || mentor.reviews?.length || 0} Student Reviews
-                </span>
-              </div>
+              {(() => {
+                const revCount = mentor.reviewCount ?? mentor.reviews?.length ?? 0;
+                const hasReviews = revCount > 0 && Boolean(mentor.rating && mentor.rating > 0);
+                const stars = hasReviews ? Math.min(5, Math.max(0, Math.round(mentor.rating || 0))) : 0;
+                const ratingVal = hasReviews ? (mentor.rating || 0).toFixed(1) : '0.0';
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', color: '#F59E0B', fontSize: '1.1rem', letterSpacing: '1px' }}>
+                      {'★'.repeat(stars)}
+                      {'☆'.repeat(5 - stars)}
+                    </div>
+                    <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)' }}>
+                      {ratingVal} / 5.0
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                      &bull; {revCount} Student Review{revCount === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                );
+              })()}
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
                 <span className="badge badge-cream">{mentor.field}</span>
@@ -184,27 +193,36 @@ function MentorDetailContent() {
               </p>
             </div>
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              background: 'linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%)',
-              padding: '0.65rem 1.25rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid #FCD34D'
-            }}>
-              <span style={{ fontSize: '1.75rem', fontWeight: 900, color: '#92400E', lineHeight: 1 }}>
-                {(mentor.rating || 5.0).toFixed(1)}
-              </span>
-              <div>
-                <div style={{ color: '#F59E0B', fontSize: '0.95rem', letterSpacing: '1px' }}>
-                  {'★'.repeat(Math.round(mentor.rating || 5))}
+            {(() => {
+              const revCount = mentor.reviewCount ?? mentor.reviews?.length ?? 0;
+              const hasReviews = revCount > 0 && Boolean(mentor.rating && mentor.rating > 0);
+              const stars = hasReviews ? Math.min(5, Math.max(0, Math.round(mentor.rating || 0))) : 0;
+              const ratingVal = hasReviews ? (mentor.rating || 0).toFixed(1) : '0.0';
+
+              return (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  background: 'linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%)',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid #FCD34D'
+                }}>
+                  <span style={{ fontSize: '1.75rem', fontWeight: 900, color: '#92400E', lineHeight: 1 }}>
+                    {ratingVal}
+                  </span>
+                  <div>
+                    <div style={{ color: '#F59E0B', fontSize: '0.95rem', letterSpacing: '1px' }}>
+                      {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: '#B45309', fontWeight: 700 }}>
+                      AVERAGE SESSION RATING
+                    </div>
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.7rem', color: '#B45309', fontWeight: 700 }}>
-                  AVERAGE SESSION RATING
-                </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
 
           {mentor.reviews && mentor.reviews.length > 0 ? (

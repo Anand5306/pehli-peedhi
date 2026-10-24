@@ -26,6 +26,7 @@ export default function ProfilePage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const [studentForm, setStudentForm] = useState(studentProfile);
   const [mentorForm, setMentorForm] = useState(mentorProfile);
@@ -50,10 +51,10 @@ export default function ProfilePage() {
     documentFileName: mentorProfile.verificationData?.documentFileName || ''
   });
 
-  // Redirect to /auth if user is signed out or guest
+  // Redirect to / if user is signed out or guest
   useEffect(() => {
     if (isLoaded && (!currentUser || role === 'guest')) {
-      router.push('/auth');
+      router.replace('/');
     }
   }, [isLoaded, currentUser, role, router]);
 
@@ -97,8 +98,8 @@ export default function ProfilePage() {
       <div style={{ padding: '6rem 0', textAlign: 'center' }}>
         <div className="container" style={{ maxWidth: '480px' }}>
           <div className="card" style={{ padding: '2.5rem' }}>
-            <div className="brand-monogram" style={{ margin: '0 auto 1rem', width: '48px', height: '48px', fontSize: '1.25rem' }}>
-              PP
+            <div className="brand-monogram" style={{ margin: '0 auto 1rem', width: '48px', height: '48px' }}>
+              <img src="/logo.png" alt="PehliPeedhi Logo" />
             </div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
               Authentication Required
@@ -115,14 +116,18 @@ export default function ProfilePage() {
     );
   }
 
-  const handleStudentSubmit = (e: React.FormEvent) => {
+  const handleStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateStudentProfile(studentForm);
+    setIsSaving(true);
+    await updateStudentProfile(studentForm);
+    setTimeout(() => setIsSaving(false), 600);
   };
 
-  const handleMentorSubmit = (e: React.FormEvent) => {
+  const handleMentorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateMentorProfile(mentorForm);
+    setIsSaving(true);
+    await updateMentorProfile(mentorForm);
+    setTimeout(() => setIsSaving(false), 600);
   };
 
   const handleStudentVerificationSubmit = (e: React.FormEvent) => {
@@ -833,8 +838,8 @@ export default function ProfilePage() {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                  <button type="submit" className="btn btn-cream">
-                    Save Student Profile
+                  <button type="submit" className="btn btn-cream" disabled={isSaving}>
+                    {isSaving ? 'Saving to Database...' : 'Save Student Profile'}
                   </button>
                 </div>
               </form>
@@ -964,8 +969,8 @@ export default function ProfilePage() {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                  <button type="submit" className="btn btn-cream">
-                    Save Mentor Profile
+                  <button type="submit" className="btn btn-cream" disabled={isSaving}>
+                    {isSaving ? 'Saving to Database...' : 'Save Mentor Profile'}
                   </button>
                 </div>
               </form>
@@ -1095,7 +1100,7 @@ export default function ProfilePage() {
                     setIsDeletingAccount(false);
                     if (ok) {
                       setShowDeleteModal(false);
-                      router.push('/auth');
+                      router.replace('/');
                     }
                   }}
                   disabled={confirmText.trim().toUpperCase() !== 'DELETE' || isDeletingAccount}

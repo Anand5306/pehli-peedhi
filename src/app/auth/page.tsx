@@ -54,8 +54,8 @@ export default function AuthPage() {
         <div className="card" style={{ padding: '2.5rem' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div className="brand-monogram" style={{ margin: '0 auto 1rem', width: '48px', height: '48px', fontSize: '1.25rem' }}>
-              PP
+            <div className="brand-monogram" style={{ margin: '0 auto 1rem', width: '48px', height: '48px' }}>
+              <img src="/logo.png" alt="PehliPeedhi Logo" />
             </div>
             <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
               {mode === 'login' ? 'Sign In to PehliPeedhi' : 'Create Your Account'}

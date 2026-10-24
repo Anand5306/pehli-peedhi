@@ -10,8 +10,8 @@ export default function Footer() {
         <div className="footer-top">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.85rem' }}>
-              <div className="brand-monogram" style={{ width: '32px', height: '32px', fontSize: '0.9rem' }}>
-                PP
+              <div className="brand-monogram" style={{ width: '32px', height: '32px' }}>
+                <img src="/logo.png" alt="PehliPeedhi Logo" />
               </div>
               <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#FFFFFF' }}>
                 PehliPeedhi

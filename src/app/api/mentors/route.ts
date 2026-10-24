@@ -71,8 +71,8 @@ export async function GET(request: Request) {
             menteeCount: m.mentee_count || 0,
             featured: !!m.featured,
             rating: mentorReviews.length > 0 
-              ? Number((mentorReviews.reduce((sum: number, r: any) => sum + (Number(r.rating) || 5), 0) / mentorReviews.length).toFixed(1))
-              : (Number(m.rating) || 5.0),
+              ? Number((mentorReviews.reduce((sum: number, r: any) => sum + (Number(r.rating) || 0), 0) / mentorReviews.length).toFixed(1))
+              : (m.review_count && Number(m.review_count) > 0 ? (Number(m.rating) || 0) : 0),
             reviewCount: mentorReviews.length || m.review_count || 0,
             reviews: mentorReviews
           };
@@ -169,7 +169,7 @@ export async function POST(request: Request) {
       availability: body.availability || 'Available on Weekends',
       verified: true,
       menteeCount: 0,
-      rating: 5.0,
+      rating: 0,
       reviewCount: 0
     };
 

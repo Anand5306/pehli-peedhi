@@ -141,8 +141,8 @@ export default function FindMentorsPage() {
         {/* Mentors Grid */}
         {mentors.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: '4.5rem 2rem' }}>
-            <div className="brand-monogram" style={{ margin: '0 auto 1.25rem', width: '56px', height: '56px', fontSize: '1.5rem' }}>
-              PP
+            <div className="brand-monogram" style={{ margin: '0 auto 1.25rem', width: '56px', height: '56px' }}>
+              <img src="/logo.png" alt="PehliPeedhi Logo" />
             </div>
             <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.75rem' }}>
               No Mentors Registered Yet
